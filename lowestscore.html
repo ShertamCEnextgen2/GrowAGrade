@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ระบบเลือกสายการเรียนและประเมินโอกาส</title>
+<link rel="stylesheet" href="score.css">
+</head>
+<body>
+  <div class="container">
+    <h1>🎓 ระบบเลือกสายการเรียนและประเมินโอกาส</h1>
+
+    <div id="step1" class="panel active">
+      <h2>1. เลือกระดับการศึกษาและแผน</h2>
+      <h3>ระดับการศึกษา</h3>
+      <div id="levelGrid"></div>
+
+      <h3>แผนการเรียน</h3>
+      <div id="planGrid"></div>
+
+      <div class="nav-buttons">
+        <div></div>
+        <button id="nextBtn1" class="btn btn-primary" disabled onclick="nextStep()">ถัดไป</button>
+      </div>
+    </div>
+
+    <div id="step2" class="panel">
+      <h2>2. เลือกสายการเรียนและคณะ</h2>
+      <div id="fieldGrid"></div>
+      <div class="nav-buttons">
+        <button class="btn btn-secondary" onclick="prevStep()">กลับ</button>
+        <button id="nextBtn2" class="btn btn-primary" disabled onclick="nextStep()">ถัดไป</button>
+      </div>
+    </div>
+
+    <div id="step3" class="panel">
+      <h2>3. เลือกมหาวิทยาลัยที่สนใจ</h2>
+      <div id="universityGrid"></div>
+      <div class="nav-buttons">
+        <button class="btn btn-secondary" onclick="prevStep()">กลับ</button>
+        <button id="nextBtn3" class="btn btn-primary" disabled onclick="nextStep()">ถัดไป</button>
+      </div>
+    </div>
+
+    <div id="step4" class="panel">
+      <h2>4. กรอกเกรดของคุณ</h2>
+      <div id="gradeForm"></div>
+      <div class="nav-buttons">
+        <button class="btn btn-secondary" onclick="prevStep()">กลับ</button>
+        <button id="calcBtn" class="btn btn-primary" onclick="calculateResult()" disabled>คำนวณผล</button>
+      </div>
+    </div>
+
+    <div id="step5" class="panel">
+      <h2>5. ผลการประเมินโอกาสเข้าศึกษา</h2>
+      <div id="resultPanel">
+        <div id="resultOutput"></div>
+        <div id="resultScore">-</div>
+        <div id="resultStatus"></div>
+        <div id="recommendations"></div>
+      </div>
+      <div class="nav-buttons">
+        <button class="btn btn-secondary" onclick="prevStep()">กลับ</button>
+        <button class="btn btn-primary" onclick="restart()">เริ่มใหม่</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+let currentStep = 1;
+const maxStep = 5;
+
+const levels = [
+  'ม.4 เทอม 1',
+  'ม.4 เทอม 2',
+  'ม.5 เทอม 1',
+  'ม.5 เทอม 2',
+  'ม.6 เทอม 1'
+];
+
+const plans = [
+  { id: 'sci-math', name: 'วิทย์ – คณิต' },
+  { id: 'sci-ai', name: 'วิทย์ – AI' },
+  { id: 'arts-math', name: 'ศิลป์ – คำนวณ' },
+  { id: 'arts-japan', name: 'ศิลป์ – ญี่ปุ่น' },
+  { id: 'arts-chinese', name: 'ศิลป์ – จีน' },
+  { id: 'arts-french', name: 'ศิลป์ – ฝรั่งเศส' },
+  { id: 'homeeco', name: 'คหกรรม' }
+];
+
+const universities = [
+  'มหาวิทยาลัยมหิดล',
+  'จุฬาลงกรณ์มหาวิทยาลัย',
+  'มหาวิทยาลัยธรรมศาสตร์',
+  'มหาวิทยาลัยเกษตรศาสตร์',
+  'มหาวิทยาลัยเชียงใหม่',
+  'มหาวิทยาลัยขอนแก่น',
+  'มหาวิทยาลัยสงขลานครินทร์',
+  'มหาวิทยาลัยศรีนครินทรวิโรฒ',
+  'มหาวิทยาลัยนเรศวร',
+  'มหาวิทยาลัยรามคำแหง',
+  'มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าธนบุรี',
+  'มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าเจ้าคุณทหารลาดกระบัง',
+  'มหาวิทยาลัยเทคโนโลยีสุรนารี',
+  'มหาวิทยาลัยอุบลราชธานี',
+  'มหาวิทยาลัยมหาสารคาม',
+  'มหาวิทยาลัยราชภัฏสวนสุนันทา',
+  'มหาวิทยาลัยราชภัฏจันทรเกษม'
+];
+
+const fieldOptions = {
+  'sci-math': [
+    { id: 'med', name: 'แพทยศาสตร์' },
+    { id: 'dent', name: 'ทันตแพทยศาสตร์' },
+    { id: 'pharma', name: 'เภสัชศาสตร์' },
+    { id: 'engineer', name: 'วิศวกรรมศาสตร์' },
+    { id: 'sci', name: 'วิทยาศาสตร์' }
+  ],
+  'sci-ai': [
+    { id: 'engineer', name: 'วิศวกรรมศาสตร์' },
+    { id: 'ai', name: 'วิทยาการคอมพิวเตอร์' },
+    { id: 'it', name: 'เทคโนโลยีสารสนเทศ' },
+    { id: 'sci', name: 'วิทยาศาสตร์' }
+  ],
+  'arts-math': [
+    { id: 'biz', name: 'พาณิชยศาสตร์และการบัญชี' },
+    { id: 'econ', name: 'เศรษฐศาสตร์' },
+    { id: 'satis', name: 'สถิติประยุกต์' },
+    { id: 'social', name: 'สังคมศาสตร์' }
+  ],
+  'arts-japan': [
+    { id: 'lang', name: 'อักษรศาสตร์' },
+    { id: 'human', name: 'มนุษยศาสตร์' },
+    { id: 'art', name: 'ศิลปศาสตร์' },
+    { id: 'teach', name: 'ศึกษา/ครุศาสตร์' },
+    { id: 'hotel', name: 'การท่องเที่ยวและการโรงแรม' }
+  ],
+  'arts-chinese': [
+    { id: 'lang', name: 'อักษรศาสตร์' },
+    { id: 'human', name: 'มนุษยศาสตร์' },
+    { id: 'art', name: 'ศิลปศาสตร์' },
+    { id: 'teach', name: 'ศึกษา/ครุศาสตร์' },
+    { id: 'hotel', name: 'การท่องเที่ยวและการโรงแรม' }
+  ],
+  'arts-french': [
+    { id: 'lang', name: 'อักษรศาสตร์' },
+    { id: 'human', name: 'มนุษยศาสตร์' },
+    { id: 'art', name: 'ศิลปศาสตร์' },
+    { id: 'teach', name: 'ศึกษา/ครุศาสตร์' },
+    { id: 'hotel', name: 'การท่องเที่ยวและการโรงแรม' }
+  ],
+  'homeeco': [
+    { id: 'homeeco1', name: 'คหกรรมศาสตร์' },
+    { id: 'homeeco2', name: 'อุตสาหกรรมเกษตร' }
+  ]
+};
+
+const gradeRequirements = {
+  med: {
+    GPAX: 3.5,
+    subjects: ['คณิตศาสตร์', 'วิทยาศาสตร์', 'ฟิสิกส์', 'เคมี', 'ชีววิทยา'],
+    subMin: 3.25
+  },
+  dent: {
+    GPAX: 3.3,
+    subjects: ['คณิตศาสตร์', 'ฟิสิกส์', 'เคมี', 'ชีววิทยา'],
+    subMin: 3.0
+  },
+  pharma: {
+    GPAX: 3.3,
+    subjects: ['คณิตศาสตร์', 'ฟิสิกส์', 'เคมี'],
+    subMin: 2.75
+  },
+  engineer: {
+    GPAX: 3.0,
+    subjects: ['คณิตศาสตร์', 'ฟิสิกส์', 'เคมี'],
+    subMin: 2.75
+  },
+  sci: {
+    GPAX: 2.8,
+    subjects: ['คณิตศาสตร์', 'วิทยาศาสตร์'],
+    subMin: 2.5
+  },
+  ai: {
+    GPAX: 3.0,
+    subjects: ['คณิตศาสตร์', 'วิทยาศาสตร์'],
+    subMin: 2.75
+  },
+  it: {
+    GPAX: 2.75,
+    subjects: ['คณิตศาสตร์', 'วิทยาศาสตร์'],
+    subMin: 2.5
+  },
+  biz: {
+    GPAX: 3.0,
+    subjects: ['คณิตศาสตร์', 'ภาษาอังกฤษ'],
+    subMin: 2.75
+  },
+  econ: {
+    GPAX: 2.75,
+    subjects: ['คณิตศาสตร์', 'ภาษาอังกฤษ'],
+    subMin: {
+      'คณิตศาสตร์': 2.5,
+      'ภาษาอังกฤษ': 2.75
+    }
+  },
+  satis: {
+    GPAX: 2.5,
+    subjects: ['คณิตศาสตร์'],
+    subMin: 2.25
+  },
+  social: {
+    GPAX: 2.5,
+    subjects: ['สังคมศาสตร์', 'ภาษาไทย'],
+    subMin: 2.25
+  },
+  lang: {
+    GPAX: 2.8,
+    subjects: ['ภาษาอังกฤษ', 'ภาษาต่างประเทศ'],
+    subMin: 2.5
+  },
+  human: {
+    GPAX: 2.75,
+    subjects: ['ภาษาอังกฤษ', 'ภาษาไทย'],
+    subMin: 2.25
+  },
+  art: {
+    GPAX: 2.75,
+    subjects: ['ศิลปะ'],
+    subMin: 2.25
+  },
+  teach: {
+    GPAX: 2.5,
+    subjects: ['ภาษาไทย', 'ภาษาอังกฤษ'],
+    subMin: 2.25
+  },
+  hotel: {
+    GPAX: 2.5,
+    subjects: ['ภาษาอังกฤษ'],
+    subMin: 2.25
+  },
+  homeeco1: {
+    GPAX: 2.25,
+    subjects: ['คหกรรม'],
+    subMin: 2.0
+  },
+  homeeco2: {
+    GPAX: 2.5,
+    subjects: ['คหกรรม'],
+    subMin: 2.25
+  }
+};
+
+let selectedData = {
+  level: '',
+  plan: '',
+  field: '',
+  university: [],
+  pastGrades: {},
+  pastTermGPA: {}
+};
+
+// สร้างการ์ดเลือก (เหมือนเดิม)
+function createCards(containerId, items, dataAttr) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = '';
+  items.forEach(item => {
+    const div = document.createElement('div');
+    div.className = 'selection-card';
+    div.textContent = item.name || item;
+    div.setAttribute(`data-${dataAttr}`, item.id || item);
+    div.onclick = () => {
+      if (dataAttr === 'university') {
+        div.classList.toggle('selected');
+        const selectedUnis = [...container.querySelectorAll('.selected')].map(el => el.getAttribute('data-university'));
+        selectedData.university = selectedUnis;
+        document.getElementById('nextBtn3').disabled = selectedUnis.length === 0;
+      } else {
+        [...container.children].forEach(c => c.classList.remove('selected'));
+        div.classList.add('selected');
+        selectedData[dataAttr] = div.getAttribute(`data-${dataAttr}`);
+        if (dataAttr === 'plan') loadFieldCards();
+        if (dataAttr === 'field') checkNextBtn2();
+        if (dataAttr === 'level' || dataAttr === 'plan') checkNextBtn1();
+      }
+    };
+    container.appendChild(div);
+  });
+}
+
+function loadLevelCards() {
+  createCards('levelGrid', levels.map(lv => ({ id: lv, name: lv })), 'level');
+}
+
+function loadPlanCards() {
+  createCards('planGrid', plans, 'plan');
+}
+
+function loadFieldCards() {
+  const fields = fieldOptions[selectedData.plan] || [];
+  createCards('fieldGrid', fields, 'field');
+}
+
+function loadUniversityCards() {
+  createCards('universityGrid', universities.map(u => ({ id: u, name: u })), 'university');
+}
+
+function checkNextBtn1() {
+  const btn = document.getElementById('nextBtn1');
+  btn.disabled = !(selectedData.level && selectedData.plan);
+}
+
+function checkNextBtn2() {
+  const btn = document.getElementById('nextBtn2');
+  btn.disabled = !selectedData.field;
+}
+
+function nextStep() {
+  if (currentStep === 1 && (!selectedData.level || !selectedData.plan)) return;
+  if (currentStep === 2 && !selectedData.field) return;
+  if (currentStep === 3 && selectedData.university.length === 0) return;
+  if (currentStep === 4) return;
+
+  currentStep++;
+  showStep(currentStep);
+
+  if (currentStep === 3) loadUniversityCards();
+  if (currentStep === 4) loadGradeForm();
+}
+
+function prevStep() {
+  if (currentStep > 1) {
+    currentStep--;
+    showStep(currentStep);
+  }
+}
+
+function showStep(step) {
+  for (let i = 1; i <= maxStep; i++) {
+    const panel = document.getElementById('step' + i);
+    panel.classList.toggle('active', i === step);
+  }
+}
+
+function calculateGPAFromTermGPA(pastTermGPA) {
+  const gpaValues = Object.values(pastTermGPA).filter(g => typeof g === 'number');
+  if (gpaValues.length === 0) return 0;
+  return gpaValues.reduce((a, b) => a + b, 0) / gpaValues.length;
+}
+
+function getTermIndex(term) {
+  return levels.indexOf(term);
+}
+
+function loadGradeForm() {
+  const container = document.getElementById('gradeForm');
+  container.innerHTML = '';
+
+  const selectedTermIndex = levels.indexOf(selectedData.level);
+  if (selectedTermIndex < 0) {
+    container.textContent = 'กรุณาเลือกเทอมก่อน';
+    document.getElementById('calcBtn').disabled = true;
+    return;
+  }
+
+  const termsToFill = levels.slice(0, selectedTermIndex);
+  const subjects = gradeRequirements[selectedData.field]
+    ? gradeRequirements[selectedData.field].subjects
+    : ['คณิตศาสตร์', 'วิทยาศาสตร์'];
+
+  if (termsToFill.length === 0) {
+    container.textContent = 'ยังไม่มีเทอมก่อนหน้าให้กรอกเกรดค่ะ ระบบจะคำนวณเป้าหมายเกรดเฉลี่ยตั้งแต่เทอมนี้เลย';
+    document.getElementById('calcBtn').disabled = false;
+    return;
+  }
+
+  termsToFill.forEach((term) => {
+    const group = document.createElement('div');
+    group.className = 'grade-group';
+    group.innerHTML = `<h4>กรอกเกรดสำหรับ ${term}</h4>`;
+
+    const gpaRow = document.createElement('div');
+    gpaRow.className = 'grade-row';
+    gpaRow.style.backgroundColor = '#f0f0f0';
+    gpaRow.style.padding = '10px';
+    gpaRow.style.marginBottom = '10px';
+    gpaRow.style.borderRadius = '5px';
+
+    const gpaLabel = document.createElement('label');
+    gpaLabel.textContent = 'เกรดเฉลี่ยรวม (GPA) ของเทอม';
+    gpaLabel.style.fontWeight = 'bold';
+
+    const gpaInput = document.createElement('input');
+    gpaInput.type = 'number';
+    gpaInput.min = 0;
+    gpaInput.max = 4;
+    gpaInput.step = 0.01;
+    gpaInput.dataset.term = term;
+    gpaInput.placeholder = '0.00';
+    gpaInput.value = selectedData.pastTermGPA[term] || '';
+
+    gpaInput.onchange = () => {
+      const val = parseFloat(gpaInput.value);
+      if (!isNaN(val) && val >= 0 && val <= 4) {
+        selectedData.pastTermGPA[term] = val;
+      } else {
+        delete selectedData.pastTermGPA[term];
+      }
+      checkCalcBtnEnabled();
+    };
+
+    gpaRow.appendChild(gpaLabel);
+    gpaRow.appendChild(gpaInput);
+    group.appendChild(gpaRow);
+
+    subjects.forEach((subj) => {
+      const row = document.createElement('div');
+      row.className = 'grade-row';
+
+      const label = document.createElement('label');
+      label.textContent = subj;
+
+      const input = document.createElement('input');
+      input.type = 'number';
+      input.min = 0;
+      input.max = 4;
+      input.step = 0.01;
+      input.dataset.term = term;
+      input.dataset.subject = subj;
+      input.placeholder = '0.00';
+
+      input.value =
+        selectedData.pastGrades[term] && selectedData.pastGrades[term][subj]
+          ? selectedData.pastGrades[term][subj]
+          : '';
+
+      input.onchange = () => {
+        const val = parseFloat(input.value);
+        if (!isNaN(val) && val >= 0 && val <= 4) {
+          if (!selectedData.pastGrades[term]) selectedData.pastGrades[term] = {};
+          selectedData.pastGrades[term][subj] = val;
+        } else {
+          if (selectedData.pastGrades[term]) delete selectedData.pastGrades[term][subj];
+        }
+        checkCalcBtnEnabled();
+      };
+
+      row.appendChild(label);
+      row.appendChild(input);
+      group.appendChild(row);
+    });
+
+    container.appendChild(group);
+  });
+
+  checkCalcBtnEnabled();
+}
+
+function checkCalcBtnEnabled() {
+  const btn = document.getElementById('calcBtn');
+  const hasTermGPA = Object.keys(selectedData.pastTermGPA).length > 0;
+  btn.disabled = !hasTermGPA;
+}
+
+function generateMinGradeTable(selectedTerm, fieldId) {
+  const startIndex = getTermIndex(selectedTerm);
+  const endIndex = getTermIndex('ม.6 เทอม 1');
+  if (startIndex < 0 || endIndex < 0 || startIndex > endIndex) return null;
+
+  const req = gradeRequirements[fieldId];
+  if (!req) return null;
+
+  const subjects = req.subjects;
+  const subMin = req.subMin;
+  const totalTerms = endIndex + 1;
+
+  let html = `<h3>ตารางเกรดขั้นต่ำต่อเทอม</h3>
+  <table border="1" cellpadding="5" style="border-collapse: collapse; width:100%;">
+    <thead style="background:#f2f2f2;">
+      <tr>
+        <th>เทอม</th>
+        <th>เกรดเฉลี่ยรวมขั้นต่ำ (GPAX)</th>`;
+  subjects.forEach(s => html += `<th>${s} (ขั้นต่ำ)</th>`);
+  html += `</tr></thead><tbody>`;
+
+  const sumBySubject = {};
+  let filledCount = 0;
+  let gpaxSum = 0;
+  let gpaxCount = 0;
+
+  for (let i = 0; i < startIndex; i++) {
+    const term = levels[i];
+    if (selectedData.pastGrades[term]) {
+      subjects.forEach(s => {
+        const g = selectedData.pastGrades[term][s];
+        if (!isNaN(g)) {
+          sumBySubject[s] = (sumBySubject[s] || 0) + g;
+        }
+      });
+      filledCount++;
+    }
+
+    const gpa = selectedData.pastTermGPA[term];
+    if (!isNaN(gpa)) {
+      gpaxSum += gpa;
+      gpaxCount++;
+    }
+  }
+
+  levels.slice(startIndex, endIndex + 1).forEach((term) => {
+    const remTerms = totalTerms - gpaxCount;
+    let gpaNext = (req.GPAX * totalTerms - gpaxSum) / remTerms;
+    if (gpaNext < 0) gpaNext = 0;
+    if (gpaNext > 4) gpaNext = 4;
+
+    html += `<tr><td>${term}</td><td style="text-align:center;">${gpaNext.toFixed(2)}</td>`;
+    gpaxSum += gpaNext;
+    gpaxCount++;
+
+    subjects.forEach(s => {
+      const sumPrev = sumBySubject[s] || 0;
+      const countPrev = filledCount;
+      const remCount = totalTerms - countPrev;
+      const target = typeof subMin === 'object' ? (subMin[s] || 0) : subMin;
+      let gNext = (target * totalTerms - sumPrev) / remCount;
+      if (gNext < 0) gNext = 0;
+      if (gNext > 4) gNext = 4;
+      html += `<td style="text-align:center;">${gNext.toFixed(2)}</td>`;
+      sumBySubject[s] = sumPrev + gNext;
+    });
+
+    filledCount++;
+    html += `</tr>`;
+  });
+
+  html += `</tbody></table>`;
+  return html;
+}
+
+function calculateResult() {
+  const resultOutput = document.getElementById('resultOutput');
+  const resultStatus = document.getElementById('resultStatus');
+  const recommendations = document.getElementById('recommendations');
+
+  const currentGPAX = calculateGPAFromTermGPA(selectedData.pastTermGPA);
+
+  const req = gradeRequirements[selectedData.field];
+  if (!req) {
+    resultOutput.textContent = 'ไม่พบข้อมูลเกณฑ์สำหรับสายที่เลือก';
+    return;
+  }
+
+  let subjectsOk = true;
+  let subjectWarnings = [];
+  for (const term in selectedData.pastGrades) {
+    const grades = selectedData.pastGrades[term];
+    for (const subj of req.subjects) {
+      if (grades[subj] !== undefined) {
+        if (typeof req.subMin === 'object') {
+          const subMinReq = req.subMin[subj] || 0;
+          if (grades[subj] < subMinReq) {
+            subjectsOk = false;
+            subjectWarnings.push(`${subj} ใน ${term} ต่ำกว่าเกณฑ์ขั้นต่ำ (${grades[subj]} < ${subMinReq})`);
+          }
+        } else if (grades[subj] < req.subMin) {
+          subjectsOk = false;
+          subjectWarnings.push(`${subj} ใน ${term} ต่ำกว่าเกณฑ์ขั้นต่ำ (${grades[subj]} < ${req.subMin})`);
+        }
+      }
+    }
+  }
+
+  resultOutput.innerHTML = `<p>เกรดเฉลี่ยรวมปัจจุบัน: <strong>${currentGPAX.toFixed(2)}</strong></p>`;
+
+  if (currentGPAX >= req.GPAX && subjectsOk) {
+    resultStatus.innerHTML = `<p style="color: green; font-weight: bold;">คุณมีโอกาสสูงที่จะผ่านเกณฑ์เข้าศึกษาในสายนี้</p>`;
+  } else {
+    resultStatus.innerHTML = `<p style="color: red; font-weight: bold;">คุณยังมีโอกาสผ่านเกณฑ์น้อย ต้องตั้งเป้าหมายเพิ่มขึ้น</p>`;
+    if (!subjectsOk) {
+      resultStatus.innerHTML += `<p>ข้อควรระวัง:</p><ul>${subjectWarnings.map(w => `<li>${w}</li>`).join('')}</ul>`;
+    }
+  }
+
+  recommendations.innerHTML = generateMinGradeTable(selectedData.level, selectedData.field);
+
+  showStep(5);
+}
+
+function restart() {
+  selectedData = {
+    level: '',
+    plan: '',
+    field: '',
+    university: [],
+    pastGrades: {},
+    pastTermGPA: {}
+  };
+  currentStep = 1;
+  showStep(1);
+  loadLevelCards();
+  loadPlanCards();
+
+  document.getElementById('nextBtn1').disabled = true;
+  document.getElementById('nextBtn2').disabled = true;
+  document.getElementById('nextBtn3').disabled = true;
+  document.getElementById('calcBtn').disabled = true;
+
+  ['levelGrid', 'planGrid', 'fieldGrid', 'universityGrid', 'gradeForm', 'resultOutput', 'resultStatus', 'recommendations'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = '';
+  });
+}
+
+// โหลดเริ่มต้น
+loadLevelCards();
+loadPlanCards();
+showStep(1);
+
+</script>
+</body>
+</html>
