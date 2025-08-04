@@ -1,21 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <link rel="stylesheet" href="login.css" />
-  <title>เข้าสู่ระบบ</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="login.css">
+  <title>Log In</title>
 </head>
 <body>
-  <main>
-    <div class="login-box">
-      <h2>เข้าสู่ระบบ</h2>
-      <input type="text" placeholder="Username" id="username">
-      <input type="password" placeholder="Password" id="password">
-      <button onclick="login()">เข้าสู่ระบบ</button>
-      <p id="error" style="color: red; margin-top: 10px;"></p>
-    </div>
-  </main>
+  <div class="login-box">
+    <h2>Log In (เข้าสู่ระบบ)</h2>
+    <input type="text" id="username" placeholder="Username">
+    <input type="password" id="password" placeholder="Password">
+    <button onclick="login()">เข้าสู่ระบบ</button>
+    <p id="error"></p>
+  </div>
 
   <script>
     function login() {
@@ -23,15 +21,16 @@
       const password = document.getElementById("password").value.trim();
       const errorElement = document.getElementById("error");
 
-      // เปลี่ยนค่าตรงนี้เป็นชื่อผู้ใช้/รหัสผ่านที่ถูกต้อง
-      const validUsername = "admin";
-      const validPassword = "123456";
+      const savedPassword = localStorage.getItem(username);
 
-      if (username === validUsername && password === validPassword) {
-        // ล็อกอินสำเร็จ
-        window.location.href = "lowestscore.html";
+      if (savedPassword && savedPassword === password) {
+        if (/^T\d{8}$/.test(username)) { 
+          window.location.href = "teacher_menu.html";
+        } else if (/^s\d{5}$/.test(username)) {
+          window.location.href = "menu.html";
+        }
       } else {
-        // แสดงข้อความผิดพลาด
+        errorElement.style.color = "red";
         errorElement.textContent = "ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง";
       }
     }

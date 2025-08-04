@@ -9,50 +9,52 @@
 <body>
   <div class="container">
     <h1>🎓 ระบบเลือกสายการเรียนและประเมินโอกาส</h1>
-
+ 
     <div id="step1" class="panel active">
       <h2>1. เลือกระดับการศึกษาและแผน</h2>
       <h3>ระดับการศึกษา</h3>
       <div id="levelGrid"></div>
-
+ 
       <h3>แผนการเรียน</h3>
       <div id="planGrid"></div>
-
+ 
       <div class="nav-buttons">
         <div></div>
         <button id="nextBtn1" class="btn btn-primary" disabled onclick="nextStep()">ถัดไป</button>
       </div>
     </div>
-
+ 
     <div id="step2" class="panel">
-      <h2>2. เลือกสายการเรียนและคณะ</h2>
+      <h2>2. เลือกคณะและมหาลัยที่สนใจ</h2>
       <div id="fieldGrid"></div>
       <div class="nav-buttons">
+        <div id="universityGrid"></div>
         <button class="btn btn-secondary" onclick="prevStep()">กลับ</button>
         <button id="nextBtn2" class="btn btn-primary" disabled onclick="nextStep()">ถัดไป</button>
+     
       </div>
     </div>
-
-    <div id="step3" class="panel">
+ 
+    <!-- <div id="step3" class="panel">
       <h2>3. เลือกมหาวิทยาลัยที่สนใจ</h2>
       <div id="universityGrid"></div>
       <div class="nav-buttons">
         <button class="btn btn-secondary" onclick="prevStep()">กลับ</button>
         <button id="nextBtn3" class="btn btn-primary" disabled onclick="nextStep()">ถัดไป</button>
       </div>
-    </div>
-
-    <div id="step4" class="panel">
-      <h2>4. กรอกเกรดของคุณ</h2>
+    </div> -->
+ 
+    <div id="step3" class="panel">
+      <h2>3. กรอกเกรดของคุณ</h2>
       <div id="gradeForm"></div>
       <div class="nav-buttons">
         <button class="btn btn-secondary" onclick="prevStep()">กลับ</button>
         <button id="calcBtn" class="btn btn-primary" onclick="calculateResult()" disabled>คำนวณผล</button>
       </div>
     </div>
-
-    <div id="step5" class="panel">
-      <h2>5. ผลการประเมินโอกาสเข้าศึกษา</h2>
+ 
+    <div id="step4" class="panel">
+      <h2>4. ผลการประเมินโอกาสเข้าศึกษา</h2>
       <div id="resultPanel">
         <div id="resultOutput"></div>
         <div id="resultScore">-</div>
@@ -61,15 +63,15 @@
       </div>
       <div class="nav-buttons">
         <button class="btn btn-secondary" onclick="prevStep()">กลับ</button>
-        <button class="btn btn-primary" onclick="restart()">เริ่มใหม่</button>
+        <button class="btn btn-primary" onclick="window.location.href='menu.html'">เสร็จสิ้น</button>
       </div>
     </div>
   </div>
-
+ 
 <script>
 let currentStep = 1;
-const maxStep = 5;
-
+const maxStep = 4;
+ 
 const levels = [
   'ม.4 เทอม 1',
   'ม.4 เทอม 2',
@@ -77,7 +79,7 @@ const levels = [
   'ม.5 เทอม 2',
   'ม.6 เทอม 1'
 ];
-
+ 
 const plans = [
   { id: 'sci-math', name: 'วิทย์ – คณิต' },
   { id: 'sci-ai', name: 'วิทย์ – AI' },
@@ -87,7 +89,7 @@ const plans = [
   { id: 'arts-french', name: 'ศิลป์ – ฝรั่งเศส' },
   { id: 'homeeco', name: 'คหกรรม' }
 ];
-
+ 
 const universities = [
   'มหาวิทยาลัยมหิดล',
   'จุฬาลงกรณ์มหาวิทยาลัย',
@@ -100,14 +102,9 @@ const universities = [
   'มหาวิทยาลัยนเรศวร',
   'มหาวิทยาลัยรามคำแหง',
   'มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าธนบุรี',
-  'มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าเจ้าคุณทหารลาดกระบัง',
-  'มหาวิทยาลัยเทคโนโลยีสุรนารี',
-  'มหาวิทยาลัยอุบลราชธานี',
-  'มหาวิทยาลัยมหาสารคาม',
-  'มหาวิทยาลัยราชภัฏสวนสุนันทา',
-  'มหาวิทยาลัยราชภัฏจันทรเกษม'
+  'มหาวิทยาลัยเทคโนโลยีพระจอมเกล้าเจ้าคุณทหารลาดกระบัง'
 ];
-
+ 
 const fieldOptions = {
   'sci-math': [
     { id: 'med', name: 'แพทยศาสตร์' },
@@ -154,7 +151,7 @@ const fieldOptions = {
     { id: 'homeeco2', name: 'อุตสาหกรรมเกษตร' }
   ]
 };
-
+ 
 const gradeRequirements = {
   med: {
     GPAX: 3.5,
@@ -250,7 +247,7 @@ const gradeRequirements = {
     subMin: 2.25
   }
 };
-
+ 
 let selectedData = {
   level: '',
   plan: '',
@@ -259,7 +256,7 @@ let selectedData = {
   pastGrades: {},
   pastTermGPA: {}
 };
-
+ 
 // สร้างการ์ดเลือก (เหมือนเดิม)
 function createCards(containerId, items, dataAttr) {
   const container = document.getElementById(containerId);
@@ -287,109 +284,118 @@ function createCards(containerId, items, dataAttr) {
     container.appendChild(div);
   });
 }
-
+ 
 function loadLevelCards() {
   createCards('levelGrid', levels.map(lv => ({ id: lv, name: lv })), 'level');
 }
-
+ 
 function loadPlanCards() {
   createCards('planGrid', plans, 'plan');
 }
-
+ 
 function loadFieldCards() {
   const fields = fieldOptions[selectedData.plan] || [];
   createCards('fieldGrid', fields, 'field');
 }
-
+ 
 function loadUniversityCards() {
   createCards('universityGrid', universities.map(u => ({ id: u, name: u })), 'university');
 }
-
+ 
 function checkNextBtn1() {
   const btn = document.getElementById('nextBtn1');
   btn.disabled = !(selectedData.level && selectedData.plan);
 }
-
+ 
 function checkNextBtn2() {
   const btn = document.getElementById('nextBtn2');
   btn.disabled = !selectedData.field;
 }
-
+ 
 function nextStep() {
   if (currentStep === 1 && (!selectedData.level || !selectedData.plan)) return;
   if (currentStep === 2 && !selectedData.field) return;
   if (currentStep === 3 && selectedData.university.length === 0) return;
   if (currentStep === 4) return;
-
+ 
   currentStep++;
   showStep(currentStep);
-
-  if (currentStep === 3) loadUniversityCards();
-  if (currentStep === 4) loadGradeForm();
+ 
+  if (currentStep === 2) loadUniversityCards();
+  if (currentStep === 3) loadGradeForm();
 }
-
+ 
 function prevStep() {
   if (currentStep > 1) {
     currentStep--;
     showStep(currentStep);
   }
 }
-
+ 
 function showStep(step) {
   for (let i = 1; i <= maxStep; i++) {
     const panel = document.getElementById('step' + i);
     panel.classList.toggle('active', i === step);
   }
+  if (step === 4 && selectedData.calculated) {
+    calculateResult();
+  }
+  if (step === 3) {
+    checkCalcBtnEnabled();
+  }
 }
 
+
+
+ 
 function calculateGPAFromTermGPA(pastTermGPA) {
   const gpaValues = Object.values(pastTermGPA).filter(g => typeof g === 'number');
   if (gpaValues.length === 0) return 0;
   return gpaValues.reduce((a, b) => a + b, 0) / gpaValues.length;
 }
-
+ 
 function getTermIndex(term) {
   return levels.indexOf(term);
 }
-
+ 
 function loadGradeForm() {
   const container = document.getElementById('gradeForm');
   container.innerHTML = '';
-
+ 
   const selectedTermIndex = levels.indexOf(selectedData.level);
   if (selectedTermIndex < 0) {
     container.textContent = 'กรุณาเลือกเทอมก่อน';
     document.getElementById('calcBtn').disabled = true;
     return;
   }
-
+ 
   const termsToFill = levels.slice(0, selectedTermIndex);
   const subjects = gradeRequirements[selectedData.field]
     ? gradeRequirements[selectedData.field].subjects
     : ['คณิตศาสตร์', 'วิทยาศาสตร์'];
-
+ 
   if (termsToFill.length === 0) {
     container.textContent = 'ยังไม่มีเทอมก่อนหน้าให้กรอกเกรดค่ะ ระบบจะคำนวณเป้าหมายเกรดเฉลี่ยตั้งแต่เทอมนี้เลย';
     document.getElementById('calcBtn').disabled = false;
     return;
   }
-
+ 
   termsToFill.forEach((term) => {
     const group = document.createElement('div');
     group.className = 'grade-group';
     group.innerHTML = `<h4>กรอกเกรดสำหรับ ${term}</h4>`;
-
+ 
     const gpaRow = document.createElement('div');
     gpaRow.className = 'grade-row';
     gpaRow.style.backgroundColor = '#f0f0f0';
     gpaRow.style.padding = '10px';
     gpaRow.style.marginBottom = '10px';
     gpaRow.style.borderRadius = '5px';
-
+ 
     const gpaLabel = document.createElement('label');
     gpaLabel.textContent = 'เกรดเฉลี่ยรวม (GPA) ของเทอม';
     gpaLabel.style.fontWeight = 'bold';
-
+ 
     const gpaInput = document.createElement('input');
     gpaInput.type = 'number';
     gpaInput.min = 0;
@@ -398,7 +404,7 @@ function loadGradeForm() {
     gpaInput.dataset.term = term;
     gpaInput.placeholder = '0.00';
     gpaInput.value = selectedData.pastTermGPA[term] || '';
-
+ 
     gpaInput.onchange = () => {
       const val = parseFloat(gpaInput.value);
       if (!isNaN(val) && val >= 0 && val <= 4) {
@@ -408,18 +414,18 @@ function loadGradeForm() {
       }
       checkCalcBtnEnabled();
     };
-
+ 
     gpaRow.appendChild(gpaLabel);
     gpaRow.appendChild(gpaInput);
     group.appendChild(gpaRow);
-
+ 
     subjects.forEach((subj) => {
       const row = document.createElement('div');
       row.className = 'grade-row';
-
+ 
       const label = document.createElement('label');
       label.textContent = subj;
-
+ 
       const input = document.createElement('input');
       input.type = 'number';
       input.min = 0;
@@ -428,12 +434,12 @@ function loadGradeForm() {
       input.dataset.term = term;
       input.dataset.subject = subj;
       input.placeholder = '0.00';
-
+ 
       input.value =
         selectedData.pastGrades[term] && selectedData.pastGrades[term][subj]
           ? selectedData.pastGrades[term][subj]
           : '';
-
+ 
       input.onchange = () => {
         const val = parseFloat(input.value);
         if (!isNaN(val) && val >= 0 && val <= 4) {
@@ -444,24 +450,24 @@ function loadGradeForm() {
         }
         checkCalcBtnEnabled();
       };
-
+ 
       row.appendChild(label);
       row.appendChild(input);
       group.appendChild(row);
     });
-
+ 
     container.appendChild(group);
   });
-
+ 
   checkCalcBtnEnabled();
 }
-
+ 
 function checkCalcBtnEnabled() {
   const btn = document.getElementById('calcBtn');
   const hasTermGPA = Object.keys(selectedData.pastTermGPA).length > 0;
   btn.disabled = !hasTermGPA;
 }
-
+ 
 function generateMinGradeTable(selectedTerm, fieldId) {
   const startIndex = getTermIndex(selectedTerm);
   const endIndex = getTermIndex('ม.6 เทอม 1');
@@ -475,8 +481,8 @@ function generateMinGradeTable(selectedTerm, fieldId) {
   const totalTerms = endIndex + 1;
 
   let html = `<h3>ตารางเกรดขั้นต่ำต่อเทอม</h3>
-  <table border="1" cellpadding="5" style="border-collapse: collapse; width:100%;">
-    <thead style="background:#f2f2f2;">
+  <table class="grade-table">
+    <thead>
       <tr>
         <th>เทอม</th>
         <th>เกรดเฉลี่ยรวมขั้นต่ำ (GPAX)</th>`;
@@ -513,7 +519,7 @@ function generateMinGradeTable(selectedTerm, fieldId) {
     if (gpaNext < 0) gpaNext = 0;
     if (gpaNext > 4) gpaNext = 4;
 
-    html += `<tr><td>${term}</td><td style="text-align:center;">${gpaNext.toFixed(2)}</td>`;
+    html += `<tr><td>${term}</td><td>${gpaNext.toFixed(2)}</td>`;
     gpaxSum += gpaNext;
     gpaxCount++;
 
@@ -525,7 +531,7 @@ function generateMinGradeTable(selectedTerm, fieldId) {
       let gNext = (target * totalTerms - sumPrev) / remCount;
       if (gNext < 0) gNext = 0;
       if (gNext > 4) gNext = 4;
-      html += `<td style="text-align:center;">${gNext.toFixed(2)}</td>`;
+      html += `<td>${gNext.toFixed(2)}</td>`;
       sumBySubject[s] = sumPrev + gNext;
     });
 
@@ -537,19 +543,20 @@ function generateMinGradeTable(selectedTerm, fieldId) {
   return html;
 }
 
+ 
 function calculateResult() {
   const resultOutput = document.getElementById('resultOutput');
   const resultStatus = document.getElementById('resultStatus');
   const recommendations = document.getElementById('recommendations');
-
+ 
   const currentGPAX = calculateGPAFromTermGPA(selectedData.pastTermGPA);
-
+ 
   const req = gradeRequirements[selectedData.field];
   if (!req) {
     resultOutput.textContent = 'ไม่พบข้อมูลเกณฑ์สำหรับสายที่เลือก';
     return;
   }
-
+ 
   let subjectsOk = true;
   let subjectWarnings = [];
   for (const term in selectedData.pastGrades) {
@@ -569,9 +576,9 @@ function calculateResult() {
       }
     }
   }
-
+ 
   resultOutput.innerHTML = `<p>เกรดเฉลี่ยรวมปัจจุบัน: <strong>${currentGPAX.toFixed(2)}</strong></p>`;
-
+ 
   if (currentGPAX >= req.GPAX && subjectsOk) {
     resultStatus.innerHTML = `<p style="color: green; font-weight: bold;">คุณมีโอกาสสูงที่จะผ่านเกณฑ์เข้าศึกษาในสายนี้</p>`;
   } else {
@@ -580,12 +587,14 @@ function calculateResult() {
       resultStatus.innerHTML += `<p>ข้อควรระวัง:</p><ul>${subjectWarnings.map(w => `<li>${w}</li>`).join('')}</ul>`;
     }
   }
-
+ 
   recommendations.innerHTML = generateMinGradeTable(selectedData.level, selectedData.field);
+  selectedData.calculated = true; 
+  localStorage.setItem('assessmentData', JSON.stringify(selectedData));
 
-  showStep(5);
+  showStep(4);
 }
-
+ 
 function restart() {
   selectedData = {
     level: '',
@@ -593,29 +602,37 @@ function restart() {
     field: '',
     university: [],
     pastGrades: {},
-    pastTermGPA: {}
+    pastTermGPA: {},
+    calculated: false
   };
   currentStep = 1;
+  localStorage.removeItem('assessmentData'); // <== เพิ่ม
   showStep(1);
   loadLevelCards();
   loadPlanCards();
-
   document.getElementById('nextBtn1').disabled = true;
   document.getElementById('nextBtn2').disabled = true;
   document.getElementById('nextBtn3').disabled = true;
   document.getElementById('calcBtn').disabled = true;
-
   ['levelGrid', 'planGrid', 'fieldGrid', 'universityGrid', 'gradeForm', 'resultOutput', 'resultStatus', 'recommendations'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.innerHTML = '';
   });
 }
 
-// โหลดเริ่มต้น
-loadLevelCards();
-loadPlanCards();
-showStep(1);
 
+const savedData = localStorage.getItem('assessmentData');
+if (savedData) {
+  selectedData = JSON.parse(savedData);
+  currentStep = 4;
+  loadLevelCards();
+  loadPlanCards();
+  showStep(4);
+} else {
+  loadLevelCards();
+  loadPlanCards();
+  showStep(1);
+}
 </script>
 </body>
 </html>
