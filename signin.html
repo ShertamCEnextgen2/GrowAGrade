@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="signin.css">
+  <title>Sign In</title>
+</head>
+<body>
+  <div class="signin-box">
+    <h2>Sign In (สมัครสมาชิก)</h2>
+    <p>Username = รหัสประจำตัว</p>
+
+    <input type="text" id="newUsername" placeholder="Username">
+    <input type="password" id="newPassword" placeholder="Password">
+    <button onclick="signIn()">สมัครสมาชิก</button>
+    <p id="message"></p>
+  </div>
+
+  <script>
+    function signIn() {
+      const username = document.getElementById("newUsername").value.trim();
+      const password = document.getElementById("newPassword").value.trim();
+      const message = document.getElementById("message");
+
+      if (!/^T\d{8}$/.test(username) && !/^s\d{5}$/.test(username)) {
+        message.style.color = "red";
+        message.textContent = "Username ไม่ถูกต้อง (T12345678 หรือ s12345)";
+        return;
+      }
+
+      if (password.length < 6) {
+        message.style.color = "red";
+        message.textContent = "Password ต้องอย่างน้อย 6 ตัว";
+        return;
+      }
+
+      localStorage.setItem(username, password);
+      message.style.color = "green";
+      message.textContent = "สมัครสมาชิกสำเร็จ!";
+
+      setTimeout(() => {
+        window.location.href = "login.html";
+      }, 1000);
+    }
+  </script>
+</body>
+</html>
