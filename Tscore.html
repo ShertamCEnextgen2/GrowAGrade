@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบคะแนนนักเรียน (แบบง่าย)</title>
+    <link type="text/css" rel="stylesheet" href="Tdesign.css" />
+</head>
+<body>
+    <div class="container">
+        <h1>🎓 การกรอกคะแนนสำหรับคุณครู </h1>
+        <!-- ส่วนเพิ่มข้อมูลแบบ Copy-Paste -->
+        <div class="section">
+            <h2>📝 เพิ่มข้อมูลจาก Excel (Copy-Paste)</h2>
+            <p><strong>วิธีใช้:</strong> Copy ข้อมูลจาก Excel แล้ว Paste ลงในช่องด้านล่าง</p>
+            <p><strong>รูปแบบ:</strong> รหัสนักเรียน [Tab] ชื่อ [Tab] นามสกุล [Tab] คะแนน</p>
+            <textarea id="excelData" placeholder="STD001    สมชาย   ใจดี    85.5
+STD002  สมหญิง  เรียนดี 92.25
+STD003  วิทยา   หลักดี  78.75"></textarea>
+            <br>
+            <button onclick="importData()">นำเข้าข้อมูล</button>
+            <button onclick="clearAllData()" style="background: #f44336;">ลบข้อมูลทั้งหมด</button>
+            <div id="importResult"></div>
+        </div>
+    </div>
+ <script>
+    // จัดเก็บข้อมูลในหน่วยความจำ (ไม่ใช้ฐานข้อมูล)
+        let students = {
+            'STD001': { id: 'STD001', firstName: 'สมชาย', lastName: 'ใจดี', score: 85.5 },
+            'STD002': { id: 'STD002', firstName: 'สมหญิง', lastName: 'เรียนดี', score: 92.25 },
+            'STD003': { id: 'STD003', firstName: 'วิทยา', lastName: 'หลักดี', score: 78.75 }
+        };
+ 
+        // ค้นหาคะแนน
+        function searchScore() {
+            const studentId = document.getElementById('searchId').value.trim().toUpperCase();
+            const resultDiv = document.getElementById('searchResult');
+           
+            if (!studentId) {
+                resultDiv.innerHTML = '<div class="result error">กรุณากรอกรหัสนักเรียน</div>';
+                return;
+            }
+           
+            const student = students[studentId];
+            if (student) {
+                resultDiv.innerHTML = `
+                    <div class="result success">
+                        <h3>${student.firstName} ${student.lastName}</h3>
+                        <div class="score-display">${student.score} คะแนน</div>
+                       
+รหัส: ${student.id}</p>
+                    </div>
+                `;
+            } else {
+                resultDiv.innerHTML = '<div class="result error">ไม่พบรหัสนักเรียนนี้</div>';
+            }
+        }
+ 
+        // นำเข้าข้อมูล
+        function importData() {
+            const data = document.getElementById('excelData').value.trim();
+            const resultDiv = document.getElementById('importResult');
+           
+            if (!data) {
+                resultDiv.innerHTML = '<div class="result error">กรุณากรอกข้อมูล</div>';
+                return;
+            }
+           
+            const lines = data.split('\n');
+            let successCount = 0;
+            let errorCount = 0;
+            let errors = [];
+           
+            lines.forEach((line, index) => {
+                line = line.trim();
+                if (!line) return;
+               
+                // แยกข้อมูลด้วย Tab หรือหลายช่องว่าง
+                const parts = line.split(/\t+|\s{2,}/).map(part => part.trim());
+               
+                if (parts.length < 4) {
+                    errors.push(`แถว ${index + 1}: ข้อมูลไม่ครบ (ต้องมี 4 คอลัมน์)`);
+                    errorCount++;
+                    return;
+                }
+               
+                const [id, firstName, lastName, scoreStr] = parts;
+                const score = parseFloat(scoreStr);
+               
+                if (!id || !firstName || !lastName) {
+                    errors.push(`แถว ${index + 1}: ข้อมูลไม่ครบถ้วน`);
+                    errorCount++;
+                    return;
+                }
+               
+                if (isNaN(score)) {
+                    errors.push(`แถว ${index + 1}: คะแนนไม่ใช่ตัวเลข`);
+                    errorCount++;
+                    return;
+                }
+               
+                students[id.toUpperCase()] = {
+                    id: id.toUpperCase(),
+                    firstName: firstName,
+                    lastName: lastName,
+                    score: score
+                };
+                successCount++;
+            });
+           
+            let message = `✅ สำเร็จ: ${successCount} รายการ`;
+            if (errorCount > 0) {
+                message += `<br>❌ ผิดพลาด: ${errorCount} รายการ`;
+                if (errors.length > 0) {
+                    message += '<br><br><strong>รายละเอียดข้อผิดพลาด:</strong><br>' + errors.join('<br>');
+                }
+            }
+           
+            resultDiv.innerHTML = `<div class="result ${errorCount > 0 ? 'error' : 'success'}">${message}</div>`;
+           
+            // ล้างข้อมูลในช่อง textarea
+            if (successCount > 0) {
+                document.getElementById('excelData').value = '';
+            }
+        }
+ 
+        // ลบข้อมูลทั้งหมด
+        function clearAllData() {
+            if (confirm('คุณต้องการลบข้อมูลทั้งหมดใช่หรือไม่?')) {
+                students = {};
+                document.getElementById('importResult').innerHTML = '<div class="result success">ลบข้อมูลทั้งหมดแล้ว</div>';
+                document.getElementById('searchResult').innerHTML = '';
+            }
+        }
+ 
+        // กด Enter เพื่อค้นหา
+        document.getElementById('searchId').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchScore();
+            }
+        });
+ </script>
+   
+</body>
+</html>

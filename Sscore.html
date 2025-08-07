@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>หน้านักเรียนดูคะแนน</title>
+    <link type="text/css" rel="stylesheet" href="Sdesign.css" />
+   
+</head>
+<body>
+    <!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบแสดงผลคะแนนนักเรียน</title>
+   
+</head>
+<body>
+   <div class="container">
+        <div class="header">
+            <h1>🎓 ผลการเรียนของฉัน</h1>
+            <p>เกรดของนักเรียนรหัส s12345</p>
+        </div>
+ 
+        <div class="stats">
+            <div class="stat-item">
+                <span class="stat-number" id="totalSubjects">0</span>
+                <div class="stat-label">จำนวนวิชาที่เรียน</div>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number" id="avgScore">0</span>
+                <div class="stat-label">คะแนนเฉลี่ย</div>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number" id="passCount">0</span>
+                <div class="stat-label">วิชาที่ผ่าน</div>
+            </div>
+        </div>
+ 
+        <div class="controls">
+            <div class="search-filter">
+                <select class="filter-select" id="subjectFilter">
+                    <option value="">วิชาทั้งหมด</option>
+                    <option value="คณิตศาสตร์">คณิตศาสตร์</option>
+                    <option value="ภาษาไทย">ภาษาไทย</option>
+                    <option value="ภาษาอังกฤษ">ภาษาอังกฤษ</option>
+                    <option value="วิทยาศาสตร์">วิทยาศาสตร์</option>
+                    <option value="สังคมศึกษา">สังคมศึกษา</option>
+                </select>
+            </div>
+        </div>
+ 
+        <div class="table-container">
+            <table class="scores-table">
+                <thead>
+                    <tr>
+                        <th>วิชา</th>
+                        <th>คะแนน</th>
+                        <th>เกรด</th>
+                        <th>สถานะ</th>
+                    </tr>
+                </thead>
+                <tbody id="scoresTableBody">
+                </tbody>
+            </table>
+        </div>
+    </div>
+     
+<script>
+        // Sample data for one student (สมชาย ใจดี)
+        let studentsData = [
+            { subject: "คณิตศาสตร์", score: 85 },
+            { subject: "ภาษาไทย", score: 92 },
+            { subject: "ภาษาอังกฤษ", score: 78 },
+            { subject: "วิทยาศาสตร์", score: 88 },
+            { subject: "สังคมศึกษา", score: 95 }
+        ];
+ 
+        function getGrade(score) {
+            if (score >= 80) return '4';
+            if (score >= 70) return '3';
+            if (score >= 60) return '2';
+            if (score >= 50) return '1';
+            return 'F';
+        }
+ 
+        function getScoreClass(score) {
+            if (score >= 80) return 'high';
+            if (score >= 70) return 'medium';
+            return 'low';
+        }
+ 
+        function getStatus(score) {
+            return score >= 60 ? '✅ ผ่าน' : '❌ ไม่ผ่าน';
+        }
+ 
+        function renderTable(data) {
+            const tbody = document.getElementById('scoresTableBody');
+            tbody.innerHTML = '';
+ 
+            data.forEach(student => {
+                const grade = getGrade(student.score);
+                const scoreClass = getScoreClass(student.score);
+                const status = getStatus(student.score);
+ 
+                const row = `
+                    <tr>
+                        <td>${student.subject}</td>
+                        <td class="score ${scoreClass}">${student.score}</td>
+                        <td><span class="grade grade-${grade}">${grade}</span></td>
+                        <td>${status}</td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+ 
+            updateStats(data);
+        }
+ 
+        function updateStats(data) {
+            const total = data.length;
+            const avgScore = total > 0 ? Math.round(data.reduce((sum, s) => sum + s.score, 0) / total) : 0;
+            const passCount = data.filter(s => s.score >= 60).length;
+ 
+            document.getElementById('totalSubjects').textContent = total;
+            document.getElementById('avgScore').textContent = avgScore;
+            document.getElementById('passCount').textContent = passCount;
+        }
+ 
+        function filterData() {
+            const subjectFilter = document.getElementById('subjectFilter').value;
+ 
+            let filtered = studentsData.filter(student => {
+                const matchesSubject = !subjectFilter || student.subject === subjectFilter;
+                return matchesSubject;
+            });
+ 
+            renderTable(filtered);
+        }
+ 
+        function openModal() {
+            document.getElementById('addScoreModal').style.display = 'block';
+        }
+ 
+        function closeModal() {
+            document.getElementById('addScoreModal').style.display = 'none';
+            document.getElementById('addScoreForm').reset();
+        }
+ 
+        // Event listeners
+        document.getElementById('subjectFilter').addEventListener('change', filterData);
+ 
+        // Initialize
+        renderTable(studentsData);
+</script>
+</body>
+</html>
