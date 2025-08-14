@@ -48,250 +48,244 @@
     </div>
   </div>
 
-  <script>
-    let currentYear, currentMonth, selectedDate = null;
-    let activities = {}; // เก็บข้อมูลกิจกรรมในหน่วยความจำ
+<script>
+let currentYear, currentMonth, selectedDate = null;
+let activities = {}; // เก็บข้อมูลกิจกรรมในหน่วยความจำ
 
-    document.addEventListener('DOMContentLoaded', () => {
-      const today = new Date();
-      currentYear = today.getFullYear();
-      currentMonth = today.getMonth();
-      
-      // สร้างกิจกรรมตัวอย่างเริ่มต้น
-      generateSampleActivities();
-      
-      buildCalendar(currentYear, currentMonth);
+document.addEventListener('DOMContentLoaded', () => {
+  const today = new Date();
+  currentYear = today.getFullYear();
+  currentMonth = today.getMonth();
+  
+  // สร้างกิจกรรมตัวอย่างเริ่มต้น
+  generateSampleActivities();
+  
+  buildCalendar(currentYear, currentMonth);
 
-      document.getElementById('btnPrevMonth').onclick = () => {
-        if (--currentMonth < 0) { 
-          currentMonth = 11; 
-          currentYear--; 
-        }
-        buildCalendar(currentYear, currentMonth);
+  document.getElementById('btnPrevMonth').onclick = () => {
+    if (--currentMonth < 0) { 
+      currentMonth = 11; 
+      currentYear--; 
+    }
+    buildCalendar(currentYear, currentMonth);
+  };
+  
+  document.getElementById('btnNextMonth').onclick = () => {
+    if (++currentMonth > 11) { 
+      currentMonth = 0; 
+      currentYear++; 
+    }
+    buildCalendar(currentYear, currentMonth);
+  };
+
+  document.getElementById('btnAddActivity').onclick = addActivityHandler;
+  document.getElementById('newActivity').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') addActivityHandler();
+  });
+});
+
+function generateSampleActivities() {
+  const today = new Date();
+  
+  // วันที่สอบปลายภาคที่กำหนด
+  const examDates = ['2025-09-15', '2025-09-17', '2025-09-19'];
+
+  // สร้างกิจกรรมตัวอย่างสำหรับ 30 วันข้างหน้า
+  for (let i = 0; i < 30; i++) {
+    const date = new Date(today);
+    date.setDate(date.getDate() + i);
+    const dateStr = formatDate(date);
+    
+    activities[dateStr] = [];
+    
+    // เพิ่มกิจกรรมพื้นฐาน
+    activities[dateStr].push({ text: 'ทบทวนบทเรียนที่ผ่านมา', done: false });
+    
+    // เพิ่มกิจกรรมตามวัน
+    if (i % 3 === 0) activities[dateStr].push({ text: 'ฝึกทำโจทย์คณิตศาสตร์', done: false });
+    if (i % 5 === 0) activities[dateStr].push({ text: 'อ่านหนังสือภาษาอังกฤษ', done: false });
+    if (i % 7 === 0) activities[dateStr].push({ text: 'ทำแบบฝึกหัดวิทยาศาสตร์', done: false });
+    
+    // วันพิเศษ
+    const dayOfWeek = date.getDay();
+    if (dayOfWeek === 0) activities[dateStr].push({ text: 'สรุปความรู้ประจำสัปดาห์', done: false });
+    if (dayOfWeek === 5) activities[dateStr].push({ text: 'เตรียมตัวสอบปลายภาค', done: false });
+  }
+
+  // เพิ่มกิจกรรมสอบปลายภาคสำหรับวันที่กำหนด แม้ว่าจะอยู่นอก 30 วันข้างหน้า
+  examDates.forEach(dateStr => {
+    if (!activities[dateStr]) activities[dateStr] = [];
+    activities[dateStr].push({ text: 'สอบปลายภาค', done: false });
+  });
+}
+
+function buildCalendar(year, month) {
+  const calendar = document.getElementById('calendar');
+  calendar.innerHTML = '';
+  
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const monthNames = [
+    'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
+    'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
+  ];
+  
+  document.getElementById('currentMonthYear').textContent = `${monthNames[month]} ${year}`;
+
+  // เพิ่มช่องว่างสำหรับวันก่อนวันที่ 1
+  for (let i = 0; i < firstDay; i++) {
+    calendar.appendChild(document.createElement('div'));
+  }
+
+  // สร้างวันที่
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateObj = new Date(year, month, d);
+    const dateStr = formatDate(dateObj);
+    const cell = document.createElement('div');
+    
+    cell.classList.add('day');
+    cell.dataset.date = dateStr;
+    cell.textContent = d;
+
+    // เน้นวันปัจจุบัน
+    if (isSameDate(dateObj, new Date())) {
+      cell.classList.add('today');
+    }
+
+    // แสดงจุดถ้ามีกิจกรรม
+    if (activities[dateStr] && activities[dateStr].length > 0) {
+      cell.classList.add('has-activity');
+    }
+
+    cell.onclick = () => selectDate(dateObj);
+    calendar.appendChild(cell);
+  }
+}
+
+function selectDate(date) {
+  selectedDate = date;
+  const dateStr = formatDate(date);
+  
+  // แสดงวันที่เลือก
+  const thaiDate = date.toLocaleDateString('th-TH', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  });
+  document.getElementById('selectedDateDisplay').textContent = thaiDate;
+  
+  // อัพเดตสีในปฏิทิน
+  document.querySelectorAll('#calendar .clicked-day').forEach(el => {
+    el.classList.remove('clicked-day');
+  });
+  
+  const selectedCell = document.querySelector(`#calendar .day[data-date="${dateStr}"]`);
+  if (selectedCell) selectedCell.classList.add('clicked-day');
+  
+  renderActivitiesForDate(dateStr);
+}
+
+function formatDate(date) {
+  const y = date.getFullYear();
+  const m = (date.getMonth() + 1).toString().padStart(2, '0');
+  const d = date.getDate().toString().padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+function isSameDate(d1, d2) {
+  return d1.getFullYear() === d2.getFullYear()
+      && d1.getMonth() === d2.getMonth()
+      && d1.getDate() === d2.getDate();
+}
+
+function renderActivitiesForDate(dateStr) {
+  const list = document.getElementById('activityList');
+  list.innerHTML = '';
+  
+  const dayActivities = activities[dateStr] || [];
+  
+  if (dayActivities.length === 0) {
+    list.innerHTML = '<div class="empty-state">ยังไม่มีกิจกรรมสำหรับวันนี้</div>';
+  } else {
+    dayActivities.forEach((item, index) => {
+      const li = document.createElement('li');
+      
+      const taskContent = document.createElement('div');
+      taskContent.classList.add('task-content');
+      
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.checked = item.done;
+      checkbox.onchange = () => {
+        item.done = checkbox.checked;
+        span.className = item.done ? 'completed' : '';
+        updateProgressBar(dayActivities);
+        updateCalendarView();
       };
       
-      document.getElementById('btnNextMonth').onclick = () => {
-        if (++currentMonth > 11) { 
-          currentMonth = 0; 
-          currentYear++; 
-        }
-        buildCalendar(currentYear, currentMonth);
+      const span = document.createElement('span');
+      span.textContent = item.text;
+      span.className = item.done ? 'completed' : '';
+      
+      const delBtn = document.createElement('button');
+      delBtn.textContent = 'ลบ';
+      delBtn.classList.add('delete-btn');
+      delBtn.onclick = () => {
+        dayActivities.splice(index, 1);
+        renderActivitiesForDate(dateStr);
+        updateCalendarView();
       };
 
-      document.getElementById('btnAddActivity').onclick = addActivityHandler;
-      document.getElementById('newActivity').addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') addActivityHandler();
-      });
+      taskContent.appendChild(checkbox);
+      taskContent.appendChild(span);
+      li.appendChild(taskContent);
+      li.appendChild(delBtn);
+      list.appendChild(li);
     });
+  }
+  
+  updateProgressBar(dayActivities);
+}
 
-    function generateSampleActivities() {
-      const today = new Date();
-      
-      // สร้างกิจกรรมตัวอย่างสำหรับ 30 วันข้างหน้า
-      for (let i = 0; i < 30; i++) {
-        const date = new Date(today);
-        date.setDate(date.getDate() + i);
-        const dateStr = formatDate(date);
-        
-        activities[dateStr] = [];
-        
-        // เพิ่มกิจกรรมพื้นฐาน
-        activities[dateStr].push({ text: 'ทบทวนบทเรียนที่ผ่านมา', done: false });
-        
-        // เพิ่มกิจกรรมตามวัน
-        if (i % 3 === 0) {
-          activities[dateStr].push({ text: 'ฝึกทำโจทย์คณิตศาสตร์', done: false });
-        }
-        if (i % 5 === 0) {
-          activities[dateStr].push({ text: 'อ่านหนังสือภาษาอังกฤษ', done: false });
-        }
-        if (i % 7 === 0) {
-          activities[dateStr].push({ text: 'ทำแบบฝึกหัดวิทยาศาสตร์', done: false });
-        }
-        
-        // วันพิเศษ
-        const dayOfWeek = date.getDay();
-        if (dayOfWeek === 0) { // วันอาทิตย์
-          activities[dateStr].push({ text: 'สรุปความรู้ประจำสัปดาห์', done: false });
-        }
-        if (dayOfWeek === 5) { // วันศุกร์
-          activities[dateStr].push({ text: 'เตรียมตัวสอบสัปดาห์หน้า', done: false });
-        }
-      }
+function addActivityHandler() {
+  const input = document.getElementById('newActivity');
+  const text = input.value.trim();
+  
+  if (!selectedDate || !text) {
+    if (!selectedDate) alert('กรุณาเลือกวันที่ก่อน');
+    return;
+  }
+  
+  const dateStr = formatDate(selectedDate);
+  
+  if (!activities[dateStr]) activities[dateStr] = [];
+  
+  activities[dateStr].push({ text, done: false });
+  input.value = '';
+  renderActivitiesForDate(dateStr);
+  updateCalendarView();
+}
+
+function updateProgressBar(dayActivities = []) {
+  const done = dayActivities.filter(a => a.done).length;
+  const total = dayActivities.length;
+  const percent = total ? Math.round((done / total) * 100) : 0;
+  
+  document.getElementById('progressBarFill').style.width = `${percent}%`;
+  document.getElementById('progressText').textContent = `ความคืบหน้า: ${percent}% (${done}/${total})`;
+}
+
+function updateCalendarView() {
+  const cells = document.querySelectorAll('#calendar .day');
+  cells.forEach(cell => {
+    const dateStr = cell.dataset.date;
+    if (dateStr && activities[dateStr] && activities[dateStr].length > 0) {
+      cell.classList.add('has-activity');
+    } else {
+      cell.classList.remove('has-activity');
     }
-
-    function buildCalendar(year, month) {
-      const calendar = document.getElementById('calendar');
-      calendar.innerHTML = '';
-      
-      const firstDay = new Date(year, month, 1).getDay();
-      const daysInMonth = new Date(year, month + 1, 0).getDate();
-      const monthNames = [
-        'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
-        'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'
-      ];
-      
-      document.getElementById('currentMonthYear').textContent = `${monthNames[month]} ${year}`;
-
-      // เพิ่มช่องว่างสำหรับวันก่อนวันที่ 1
-      for (let i = 0; i < firstDay; i++) {
-        calendar.appendChild(document.createElement('div'));
-      }
-
-      // สร้างวันที่
-      for (let d = 1; d <= daysInMonth; d++) {
-        const dateObj = new Date(year, month, d);
-        const dateStr = formatDate(dateObj);
-        const cell = document.createElement('div');
-        
-        cell.classList.add('day');
-        cell.dataset.date = dateStr;
-        cell.textContent = d;
-
-        // เน้นวันปัจจุบัน
-        if (isSameDate(dateObj, new Date())) {
-          cell.classList.add('today');
-        }
-
-        // แสดงจุดถ้ามีกิจกรรม
-        if (activities[dateStr] && activities[dateStr].length > 0) {
-          cell.classList.add('has-activity');
-        }
-
-        cell.onclick = () => selectDate(dateObj);
-        calendar.appendChild(cell);
-      }
-    }
-
-    function selectDate(date) {
-      selectedDate = date;
-      const dateStr = formatDate(date);
-      
-      // แสดงวันที่เลือก
-      const thaiDate = date.toLocaleDateString('th-TH', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric'
-      });
-      document.getElementById('selectedDateDisplay').textContent = thaiDate;
-      
-      // อัพเดตสีในปฏิทิน
-      document.querySelectorAll('#calendar .clicked-day').forEach(el => {
-        el.classList.remove('clicked-day');
-      });
-      
-      const selectedCell = document.querySelector(`#calendar .day[data-date="${dateStr}"]`);
-      if (selectedCell) selectedCell.classList.add('clicked-day');
-      
-      renderActivitiesForDate(dateStr);
-    }
-
-    function formatDate(date) {
-      const y = date.getFullYear();
-      const m = (date.getMonth() + 1).toString().padStart(2, '0');
-      const d = date.getDate().toString().padStart(2, '0');
-      return `${y}-${m}-${d}`;
-    }
-
-    function isSameDate(d1, d2) {
-      return d1.getFullYear() === d2.getFullYear()
-          && d1.getMonth() === d2.getMonth()
-          && d1.getDate() === d2.getDate();
-    }
-
-    function renderActivitiesForDate(dateStr) {
-      const list = document.getElementById('activityList');
-      list.innerHTML = '';
-      
-      const dayActivities = activities[dateStr] || [];
-      
-      if (dayActivities.length === 0) {
-        list.innerHTML = '<div class="empty-state">ยังไม่มีกิจกรรมสำหรับวันนี้</div>';
-      } else {
-        dayActivities.forEach((item, index) => {
-          const li = document.createElement('li');
-          
-          const taskContent = document.createElement('div');
-          taskContent.classList.add('task-content');
-          
-          const checkbox = document.createElement('input');
-          checkbox.type = 'checkbox';
-          checkbox.checked = item.done;
-          checkbox.onchange = () => {
-            item.done = checkbox.checked;
-            span.className = item.done ? 'completed' : '';
-            updateProgressBar(dayActivities);
-            updateCalendarView();
-          };
-          
-          const span = document.createElement('span');
-          span.textContent = item.text;
-          span.className = item.done ? 'completed' : '';
-          
-          const delBtn = document.createElement('button');
-          delBtn.textContent = 'ลบ';
-          delBtn.classList.add('delete-btn');
-          delBtn.onclick = () => {
-            dayActivities.splice(index, 1);
-            renderActivitiesForDate(dateStr);
-            updateCalendarView();
-          };
-
-          taskContent.appendChild(checkbox);
-          taskContent.appendChild(span);
-          li.appendChild(taskContent);
-          li.appendChild(delBtn);
-          list.appendChild(li);
-        });
-      }
-      
-      updateProgressBar(dayActivities);
-    }
-
-    function addActivityHandler() {
-      const input = document.getElementById('newActivity');
-      const text = input.value.trim();
-      
-      if (!selectedDate || !text) {
-        if (!selectedDate) {
-          alert('กรุณาเลือกวันที่ก่อน');
-        }
-        return;
-      }
-      
-      const dateStr = formatDate(selectedDate);
-      
-      if (!activities[dateStr]) {
-        activities[dateStr] = [];
-      }
-      
-      activities[dateStr].push({ text, done: false });
-      input.value = '';
-      renderActivitiesForDate(dateStr);
-      updateCalendarView();
-    }
-
-    function updateProgressBar(dayActivities = []) {
-      const done = dayActivities.filter(a => a.done).length;
-      const total = dayActivities.length;
-      const percent = total ? Math.round((done / total) * 100) : 0;
-      
-      document.getElementById('progressBarFill').style.width = `${percent}%`;
-      document.getElementById('progressText').textContent = `ความคืบหน้า: ${percent}% (${done}/${total})`;
-    }
-
-    function updateCalendarView() {
-      // อัพเดตจุดแสดงกิจกรรมในปฏิทิน
-      const cells = document.querySelectorAll('#calendar .day');
-      cells.forEach(cell => {
-        const dateStr = cell.dataset.date;
-        if (dateStr && activities[dateStr] && activities[dateStr].length > 0) {
-          cell.classList.add('has-activity');
-        } else {
-          cell.classList.remove('has-activity');
-        }
-      });
-    }
-  </script>
+  });
+}
+</script>
 </body>
 </html>
